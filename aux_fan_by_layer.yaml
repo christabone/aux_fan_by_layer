@@ -1,13 +1,13 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+    Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.<br>
 
     Specify fan speed settings in the format `[percentage:layer]`, `[percentage:layer_start-layer_end]`, `[layer]`, or `[layer_start-layer_end]`.
 
-    **Multiple settings can be combined by separating them with commas.**
+    Multiple settings can be combined by separating them with commas.
 
-    For example: `[50:190]`, `[50:190-210]`, `[150]`, `[190-210]`, `[60:220-230]`.
+    For example: `[50:195-210]`, `[60:220-230]`, `[70:250].
 
   domain: automation
   input:
@@ -28,9 +28,9 @@ blueprint:
       description: >
         Specify fan speed settings in the format `[layer_start]`, `[percentage:layer_start]`, `[layer_start-layer_end]`, or `[percentage:layer_start-layer_end]`.
 
-        **Multiple settings can be combined by separating them with commas.**
+        Multiple settings can be combined by separating them with commas.
 
-        For example: `[150], [50:190], [190-210], [50:190-210], [60:220-230]`.
+        For example: `[50:195-210]`, `[60:220-230]`, `[70:250].
 
       default: "[50:190-210]"
       selector:
