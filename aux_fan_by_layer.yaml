@@ -1,7 +1,7 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    789Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+    777Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
     Specify fan speed settings in the format `[percentage:layer]`, `[percentage:layer_start-layer_end]`, `[layer]`, or `[layer_start-layer_end]`.
 
@@ -57,13 +57,6 @@ trigger:
     entity_id: !input printer_layer_sensor
 action:
   - variables:
-      current_layer: "{{ states( trigger.entity_id ) | int(0) }}"
-      fan_settings_str: !input fan_speed_settings
-      default_fan_percentage: !input default_fan_percentage
-      fan_speed_sensor: !input printer_fan_speed_sensor
-      current_fan_speed: "{{ states( fan_speed_sensor ) | int(0) }}"
-action:
-  - variables:
       current_layer: "{{ states(trigger.entity_id) | int(0) }}"
       fan_settings_str: !input fan_speed_settings
       default_fan_percentage: !input default_fan_percentage
@@ -95,19 +88,19 @@ action:
           {% endif %}
         {% endfor %}
         {{ fan_settings }}
-    current_percentage: >
-      {% set current_percentage = 0 %}
-      {% for setting in fan_settings_list %}
-        {% if current_layer >= setting.layer_start and current_layer <= setting.layer_end %}
-          {% if setting.percentage is not none %}
-            {% set current_percentage = setting.percentage %}
-          {% else %}
-            {% set current_percentage = default_fan_percentage | int %}
+      current_percentage: >
+        {% set current_percentage = 0 %}
+        {% for setting in fan_settings_list %}
+          {% if current_layer >= setting.layer_start and current_layer <= setting.layer_end %}
+            {% if setting.percentage is not none %}
+              {% set current_percentage = setting.percentage %}
+            {% else %}
+              {% set current_percentage = default_fan_percentage | int %}
+            {% endif %}
+            {% break %}
           {% endif %}
-          {% break %}
-        {% endif %}
-      {% endfor %}
-      {{ current_percentage }}
+        {% endfor %}
+        {{ current_percentage }}
   - service: system_log.write
     data:
       level: info
