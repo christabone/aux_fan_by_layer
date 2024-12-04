@@ -1,7 +1,7 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    456Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+    789Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
     Specify fan speed settings in the format `[percentage:layer]`, `[percentage:layer_start-layer_end]`, `[layer]`, or `[layer_start-layer_end]`.
 
@@ -62,35 +62,52 @@ action:
       default_fan_percentage: !input default_fan_percentage
       fan_speed_sensor: !input printer_fan_speed_sensor
       current_fan_speed: "{{ states( fan_speed_sensor ) | int(0) }}"
+action:
+  - variables:
+      current_layer: "{{ states(trigger.entity_id) | int(0) }}"
+      fan_settings_str: !input fan_speed_settings
+      default_fan_percentage: !input default_fan_percentage
+      fan_speed_sensor: !input printer_fan_speed_sensor
+      current_fan_speed: "{{ states(fan_speed_sensor) | int(0) }}"
       fan_settings_list: >
-        {% set pattern = '\[(?:(\d+):)?(\d+)(?:-(\d+))?\]' %}
         {% set fan_settings = [] %}
         {% for setting in fan_settings_str.split(',') %}
           {% set setting = setting.strip() %}
-          {% set matches = setting | regex_findall(pattern) %}
-          {% for match in matches %}
-            {% set percentage = match[0] %}
-            {% set layer_start = match[1] %}
-            {% set layer_end = match[2] if match[2] != '' else match[1] %}
-            {% set percentage = percentage | int if percentage != '' else None %}
-            {% set fan_settings = fan_settings + [ { 'percentage': percentage, 'layer_start': layer_start | int, 'layer_end': layer_end | int } ] %}
-          {% endfor %}
-        {% endfor %}
-        {{ fan_settings }}
-  - variables:
-      current_percentage: >
-        {% set current_percentage = 0 %}
-        {% for setting in fan_settings_list %}
-          {% if current_layer >= setting.layer_start and current_layer <= setting.layer_end %}
-            {% if setting.percentage is not none %}
-              {% set current_percentage = setting.percentage %}
+          {% if setting.startswith('[') and setting.endswith(']') %}
+            {% set content = setting[1:-1] %}
+            {% if ':' in content %}
+              {% set parts = content.split(':') %}
+              {% set percentage = parts[0] | int %}
+              {% set layers_part = parts[1] %}
             {% else %}
-              {% set current_percentage = default_fan_percentage | int %}
+              {% set percentage = None %}
+              {% set layers_part = content %}
             {% endif %}
-            {% break %}
+            {% if '-' in layers_part %}
+              {% set layer_parts = layers_part.split('-') %}
+              {% set layer_start = layer_parts[0] | int %}
+              {% set layer_end = layer_parts[1] | int %}
+            {% else %}
+              {% set layer_start = layers_part | int %}
+              {% set layer_end = layer_start %}
+            {% endif %}
+            {% set fan_settings = fan_settings + [ {'percentage': percentage, 'layer_start': layer_start, 'layer_end': layer_end} ] %}
           {% endif %}
         {% endfor %}
-        {{ current_percentage }}
+        {{ fan_settings }}
+    current_percentage: >
+      {% set current_percentage = 0 %}
+      {% for setting in fan_settings_list %}
+        {% if current_layer >= setting.layer_start and current_layer <= setting.layer_end %}
+          {% if setting.percentage is not none %}
+            {% set current_percentage = setting.percentage %}
+          {% else %}
+            {% set current_percentage = default_fan_percentage | int %}
+          {% endif %}
+          {% break %}
+        {% endif %}
+      {% endfor %}
+      {{ current_percentage }}
   - service: system_log.write
     data:
       level: info
