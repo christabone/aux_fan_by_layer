@@ -1,0 +1,99 @@
+blueprint:
+  name: Layer-Based AUX Fan Control
+  description: >
+    Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+
+    Specify fan speed settings in the format `[percentage:layer]`, `[percentage:layer_start-layer_end]`, `[layer]`, or `[layer_start-layer_end]`.
+
+    For example: `[50:190]`, `[50:190-210]`, `[150]`, `[190-210]`.
+
+  domain: automation
+  input:
+    printer_layer_sensor:
+      name: Printer Current Layer Sensor Entity
+      description: Sensor entity that provides the current layer of the print job.
+      selector:
+        entity:
+          domain: sensor
+    printer_fan_control:
+      name: Printer AUX Fan Control Entity
+      description: Fan entity to control the printer's aux fan power and speed.
+      selector:
+        entity:
+          domain: fan
+    fan_speed_settings:
+      name: Fan Speed Settings
+      description: >
+        Specify fan speed settings in the format `[layer_start]`, `[percentage:layer_start]`, `[layer_start-layer_end]`, or `[percentage:layer_start-layer_end]`.
+
+        For example: `[150]`, `[50:190]`, `[190-210]`, `[50:190-210]`, `[60:220-230]`.
+
+      default: "[50:190-210]"
+      selector:
+        text:
+    default_fan_percentage:
+      name: Default Fan Percentage
+      description: >
+        The default fan speed percentage to use when no percentage is specified in a setting.
+      default: 70
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+trigger:
+  - platform: state
+    entity_id: !input printer_layer_sensor
+action:
+  - variables:
+      current_layer: "{{ states( trigger.entity_id ) | int }}"
+      fan_settings_str: !input fan_speed_settings
+      default_fan_percentage: !input default_fan_percentage
+      fan_settings_list: >
+        {% set fan_settings = [] %}
+        {% for setting in fan_settings_str.split(',') %}
+          {% set setting = setting.strip() %}
+          {% if setting.startswith('[') and setting.endswith(']') %}
+            {% set content = setting[1:-1] %}
+            {% if ':' in content %}
+              {% set percentage, layers = content.split(':', 1) %}
+              {% if '-' in layers %}
+                {% set layer_start, layer_end = layers.split('-', 1) %}
+              {% else %}
+                {% set layer_start = layers %}
+                {% set layer_end = layers %}
+              {% endif %}
+              {% set fan_settings = fan_settings + [ { 'percentage': percentage | int, 'layer_start': layer_start | int, 'layer_end': layer_end | int } ] %}
+            {% else %}
+              {% set layers = content %}
+              {% if '-' in layers %}
+                {% set layer_start, layer_end = layers.split('-', 1) %}
+              {% else %}
+                {% set layer_start = layers %}
+                {% set layer_end = layers %}
+              {% endif %}
+              {% set fan_settings = fan_settings + [ { 'percentage': None, 'layer_start': layer_start | int, 'layer_end': layer_end | int } ] %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        {{ fan_settings }}
+  - variables:
+      current_percentage: >
+        {% set current_percentage = 0 %}
+        {% for setting in fan_settings_list %}
+          {% if current_layer >= setting.layer_start and current_layer <= setting.layer_end %}
+            {% if setting.percentage is not none %}
+              {% set current_percentage = setting.percentage %}
+            {% else %}
+              {% set current_percentage = default_fan_percentage | int %}
+            {% endif %}
+            {% break %}
+          {% endif %}
+        {% endfor %}
+        {{ current_percentage }}
+  - service: fan.set_percentage
+    target:
+      entity_id: !input printer_fan_control
+    data:
+      percentage: "{{ current_percentage }}"
