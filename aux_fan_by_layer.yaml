@@ -62,7 +62,7 @@ action:
       default_fan_percentage: !input default_fan_percentage
       fan_speed_sensor: !input printer_fan_speed_sensor
       current_fan_speed: "{{ states( fan_speed_sensor ) | int(0) }}"
-      fan_settings_list: >
+      fan_settings_list: |
         {% set fan_settings = [] %}
         {% for setting in fan_settings_str.split(',') %}
           {% set setting = setting.strip() %}
