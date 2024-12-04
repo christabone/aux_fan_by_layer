@@ -5,7 +5,9 @@ blueprint:
 
     Specify fan speed settings in the format `[percentage:layer]`, `[percentage:layer_start-layer_end]`, `[layer]`, or `[layer_start-layer_end]`.
 
-    For example: `[50:190]`, `[50:190-210]`, `[150]`, `[190-210]`.
+    **Multiple settings can be combined by separating them with commas.**
+
+    For example: `[50:190]`, `[50:190-210]`, `[150]`, `[190-210]`, `[60:220-230]`.
 
   domain: automation
   input:
@@ -26,7 +28,9 @@ blueprint:
       description: >
         Specify fan speed settings in the format `[layer_start]`, `[percentage:layer_start]`, `[layer_start-layer_end]`, or `[percentage:layer_start-layer_end]`.
 
-        For example: `[150]`, `[50:190]`, `[190-210]`, `[50:190-210]`, `[60:220-230]`.
+        **Multiple settings can be combined by separating them with commas.**
+
+        For example: `[150], [50:190], [190-210], [50:190-210], [60:220-230]`.
 
       default: "[50:190-210]"
       selector:
