@@ -19,10 +19,16 @@ blueprint:
           domain: sensor
     printer_fan_control:
       name: Printer AUX Fan Control Entity
-      description: Fan entity to control the printer's aux fan power and speed.
+      description: Fan entity to control the printer's AUX fan power and speed.
       selector:
         entity:
           domain: fan
+    printer_fan_speed_sensor:
+      name: Printer AUX Fan Speed Sensor Entity
+      description: Sensor entity that provides the current AUX fan speed.
+      selector:
+        entity:
+          domain: sensor
     fan_speed_settings:
       name: Fan Speed Settings
       description: >
@@ -51,9 +57,11 @@ trigger:
     entity_id: !input printer_layer_sensor
 action:
   - variables:
-      current_layer: "{{ states( trigger.entity_id ) | int }}"
+      current_layer: "{{ states( trigger.entity_id ) | int(0) }}"
       fan_settings_str: !input fan_speed_settings
       default_fan_percentage: !input default_fan_percentage
+      fan_speed_sensor: !input printer_fan_speed_sensor
+      current_fan_speed: "{{ states( fan_speed_sensor ) | int(0) }}"
       fan_settings_list: >
         {% set fan_settings = [] %}
         {% for setting in fan_settings_str.split(',') %}
@@ -97,17 +105,24 @@ action:
         {% endfor %}
         {{ current_percentage }}
   - choose:
-      - conditions: "{{ current_percentage | int > 0 }}"
+      - conditions:
+          - "{{ current_percentage | int > 0 }}"
+          - "{{ current_fan_speed | int != current_percentage | int }}"
         sequence:
-          - service: fan.turn_on
-            target:
-              entity_id: !input printer_fan_control
+          - choose:
+              - conditions: "{{ current_fan_speed | int == 0 }}"
+                sequence:
+                  - service: fan.turn_on
+                    target:
+                      entity_id: !input printer_fan_control
           - service: fan.set_percentage
             target:
               entity_id: !input printer_fan_control
             data:
               percentage: "{{ current_percentage }}"
-      - conditions: "{{ current_percentage | int == 0 }}"
+      - conditions:
+          - "{{ current_percentage | int == 0 }}"
+          - "{{ current_fan_speed | int != 0 }}"
         sequence:
           - service: fan.turn_off
             target:

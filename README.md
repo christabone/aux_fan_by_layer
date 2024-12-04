@@ -1,5 +1,5 @@
-Layer-Based AUX Fan Control for Bambu Lab P1S/X1C printers
-=======================================
+Layer-Based AUX Fan Control for Bambu Lab P1S/X1C Printers
+==========================================================
 
 Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer of your print job using Home Assistant.
 
@@ -7,6 +7,7 @@ Overview
 --------
 
 -   **Adjust AUX fan speed** based on the current printing layer.
+-   **Optimized commands** by checking current fan speed before sending new commands.
 -   **Supports single layers and layer ranges** with specified percentages.
 -   **Default fan percentage** when no specific setting applies.
 -   **Easy to configure and customize** through Home Assistant's UI.
@@ -15,10 +16,11 @@ Requirements
 ------------
 
 -   **Home Assistant** with the Bambu Lab integration installed.
--   A **Bambu Lab 3D P1S/X1C printer** connected to Home Assistant.
+-   A **Bambu Lab P1S/X1C 3D printer** connected to Home Assistant.
 -   Entities for:
     -   **Current Layer Sensor** (e.g., `sensor.p1s_current_layer`).
     -   **AUX Fan Control** (e.g., `fan.p1s_aux_fan`).
+    -   **AUX Fan Speed Sensor** (e.g., `sensor.p1s_aux_fan_speed`).
 
 Installation
 ------------
@@ -27,9 +29,9 @@ Installation
 
 1.  **Import the Blueprint URL:**
 
-    Click the button below to import the Spaghetti Detection blueprint:
+    Click the button below to import the Layer-Based AUX Fan Control blueprint:
 
-    [![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/christabone/aux_fan_by_layer/blob/main/aux_fan_by_layer.yaml)
+    ![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)
 
 2.  **In Home Assistant:**
 
@@ -51,14 +53,16 @@ Configuration
 2.  **Fill in the Inputs:**
 
     -   **Printer Current Layer Sensor Entity:**
-        -   Select your printer's current layer sensor (*e.g.*, `sensor.p1s_current_layer`).
+        -   Select your printer's current layer sensor (e.g., `sensor.p1s_current_layer`).
     -   **Printer AUX Fan Control Entity:**
-        -   Select your printer's AUX fan control entity (*e.g.*, `fan.p1s_aux_fan`).
+        -   Select your printer's AUX fan control entity (e.g., `fan.p1s_aux_fan`).
+    -   **Printer AUX Fan Speed Sensor Entity:**
+        -   Select your printer's AUX fan speed sensor (e.g., `sensor.p1s_aux_fan_speed`).
     -   **Fan Speed Settings:**
         -   Input your fan speed settings using the specified format.
         -   Example: `[50:190-210], [60:220-230], [150]`
     -   **Default Fan Percentage:**
-        -   Set the default fan speed percentage (*e.g.*, `70`).
+        -   Set the default fan speed percentage (e.g., `70`).
         -   This percentage is used when no specific setting applies.
 3.  **Save and Enable the Automation:**
 
@@ -118,7 +122,6 @@ Fan Speed Settings Format
     -   **Layers 1-189:** Fan is **OFF**.
     -   **Layers 190-210:** Fan runs at **50%**.
     -   **Layers 211 and above:** Fan is **OFF**.
-
 -   **Example 2:**
 
     `[45:80-120], [80:130-145], [60:150]`
@@ -129,13 +132,12 @@ Fan Speed Settings Format
     -   **Layers 130-145:** Fan runs at **80%**.
     -   **Layers 146-149:** Fan is **OFF**.
     -   **Layers 150 and above:** Fan runs at **60%**.
-
 -   **Example 3:**
 
     `[150]`
 
     -   **Layers 1-149:** Fan is **OFF**.
-    -   **Layers 150 and above:** Fan runs at the **default percentage** (*e.g.*, 70%).
+    -   **Layers 150 and above:** Fan runs at the **default percentage** (e.g., 70%).
 
 ### **Default Fan Percentage**
 
@@ -145,6 +147,23 @@ Fan Speed Settings Format
 -   **Default Value:**
     -   `70` (can be adjusted during configuration).
 -   **Fan is OFF when the current layer does not match any settings.**
+
+How It Works
+------------
+
+-   **Optimized Command Sending:**
+
+    -   The automation checks the current fan speed before sending commands.
+    -   If the fan is already at the desired speed, no action is taken.
+    -   Reduces unnecessary commands and potential wear on the device.
+-   **Fan Control Logic:**
+
+    -   **When the desired fan speed differs from the current speed:**
+        -   If the desired speed is greater than `0`:
+            -   If the fan is off, it turns on the fan.
+            -   Sets the fan to the desired speed.
+        -   If the desired speed is `0`:
+            -   Turns off the fan if it's currently on.
 
 Notes and Tips
 --------------
@@ -157,6 +176,9 @@ Notes and Tips
 
     -   Test the automation with different layer values to ensure it behaves as expected.
     -   Use the **Template Editor** in Home Assistant for advanced testing of the parsing logic.
+-   **Avoiding Unnecessary Commands:**
+
+    -   By checking the current fan speed, the automation minimizes unnecessary commands, which can help prevent communication overload with the printer.
 
 Troubleshooting
 ---------------
@@ -165,6 +187,7 @@ Troubleshooting
 
     -   Check that your `printer_layer_sensor` is reporting the correct layer.
     -   Verify that your `printer_fan_control` entity is functioning and supports percentage control.
+    -   Ensure that the `printer_fan_speed_sensor` is correctly reporting the fan speed.
 -   **Invalid Fan Speed Settings:**
 
     -   Ensure all settings are enclosed in square brackets `[ ]`.
