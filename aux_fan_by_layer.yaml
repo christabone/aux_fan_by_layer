@@ -1,7 +1,7 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    123Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+    456Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
     Specify fan speed settings in the format `[percentage:layer]`, `[percentage:layer_start-layer_end]`, `[layer]`, or `[layer_start-layer_end]`.
 
@@ -62,32 +62,19 @@ action:
       default_fan_percentage: !input default_fan_percentage
       fan_speed_sensor: !input printer_fan_speed_sensor
       current_fan_speed: "{{ states( fan_speed_sensor ) | int(0) }}"
-      fan_settings_list: |
+      fan_settings_list: >
+        {% set pattern = '\[(?:(\d+):)?(\d+)(?:-(\d+))?\]' %}
         {% set fan_settings = [] %}
         {% for setting in fan_settings_str.split(',') %}
           {% set setting = setting.strip() %}
-          {% if setting.startswith('[') and setting.endswith(']') %}
-            {% set content = setting[1:-1] %}
-            {% if ':' in content %}
-              {% set percentage, layers = content.split(':', 1) %}
-              {% if '-' in layers %}
-                {% set layer_start, layer_end = layers.split('-', 1) %}
-              {% else %}
-                {% set layer_start = layers %}
-                {% set layer_end = layers %}
-              {% endif %}
-              {% set fan_settings = fan_settings + [ { 'percentage': percentage | int, 'layer_start': layer_start | int, 'layer_end': layer_end | int } ] %}
-            {% else %}
-              {% set layers = content %}
-              {% if '-' in layers %}
-                {% set layer_start, layer_end = layers.split('-', 1) %}
-              {% else %}
-                {% set layer_start = layers %}
-                {% set layer_end = layers %}
-              {% endif %}
-              {% set fan_settings = fan_settings + [ { 'percentage': None, 'layer_start': layer_start | int, 'layer_end': layer_end | int } ] %}
-            {% endif %}
-          {% endif %}
+          {% set matches = setting | regex_findall(pattern) %}
+          {% for match in matches %}
+            {% set percentage = match[0] %}
+            {% set layer_start = match[1] %}
+            {% set layer_end = match[2] if match[2] != '' else match[1] %}
+            {% set percentage = percentage | int if percentage != '' else None %}
+            {% set fan_settings = fan_settings + [ { 'percentage': percentage, 'layer_start': layer_start | int, 'layer_end': layer_end | int } ] %}
+          {% endfor %}
         {% endfor %}
         {{ fan_settings }}
   - variables:
