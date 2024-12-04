@@ -1,11 +1,11 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.<br>
+    Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
-    Specify fan speed settings in the format `[percentage:layer]`, `[percentage:layer_start-layer_end]`, `[layer]`, or `[layer_start-layer_end]`.<br>
+    Specify fan speed settings in the format `[percentage:layer]`, `[percentage:layer_start-layer_end]`, `[layer]`, or `[layer_start-layer_end]`.
 
-    Multiple settings can be combined by separating them with commas.<br>
+    Multiple settings can be combined by separating them with commas.
 
     For example: `[50:195-210]`, `[60:220-230]`, `[70:250]`.
 
@@ -26,9 +26,9 @@ blueprint:
     fan_speed_settings:
       name: Fan Speed Settings
       description: >
-        Specify fan speed settings in the format `[layer_start]`, `[percentage:layer_start]`, `[layer_start-layer_end]`, or `[percentage:layer_start-layer_end]`.<br>
+        Specify fan speed settings in the format `[layer_start]`, `[percentage:layer_start]`, `[layer_start-layer_end]`, or `[percentage:layer_start-layer_end]`.
 
-        Multiple settings can be combined by separating them with commas.<br>
+        Multiple settings can be combined by separating them with commas.
 
         For example: `[50:195-210]`, `[60:220-230]`, `[70:250]`.
 
@@ -96,8 +96,19 @@ action:
           {% endif %}
         {% endfor %}
         {{ current_percentage }}
-  - service: fan.set_percentage
-    target:
-      entity_id: !input printer_fan_control
-    data:
-      percentage: "{{ current_percentage }}"
+  - choose:
+      - conditions: "{{ current_percentage | int > 0 }}"
+        sequence:
+          - service: fan.turn_on
+            target:
+              entity_id: !input printer_fan_control
+          - service: fan.set_percentage
+            target:
+              entity_id: !input printer_fan_control
+            data:
+              percentage: "{{ current_percentage }}"
+      - conditions: "{{ current_percentage | int == 0 }}"
+        sequence:
+          - service: fan.turn_off
+            target:
+              entity_id: !input printer_fan_control
