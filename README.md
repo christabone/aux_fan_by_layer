@@ -1,9 +1,7 @@
 Layer-Based AUX Fan Control for Bambu Lab P1S/X1C printers
 =======================================
 
-Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer of your print job.
-
-This Home Assistant Automation Blueprint allows you to specify fan speed settings for specific layers or ranges of layers, enabling precise AUX fan control over the printing environment.
+Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer of your print job using Home Assistant.
 
 Overview
 --------
