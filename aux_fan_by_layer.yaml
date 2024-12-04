@@ -104,6 +104,15 @@ action:
           {% endif %}
         {% endfor %}
         {{ current_percentage }}
+  - service: system_log.write
+    data:
+      level: info
+      message: >
+        AUX Fan Control Debug:
+        current_layer: {{ current_layer }},
+        current_percentage: {{ current_percentage }},
+        current_fan_speed: {{ current_fan_speed }},
+        fan_settings_list: {{ fan_settings_list }}
   - choose:
       - conditions:
           - "{{ current_percentage | int > 0 }}"
