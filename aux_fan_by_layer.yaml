@@ -8,17 +8,17 @@ blueprint:
     **Format:**
     <br>
     ```
-    {"layer_start-layer_end": "percentage", ...}
+    {"layer_start-layer_end": "percentage", "layer_start+": "percentage", ...}
     ```
     <br>
-    - **layer_start-layer_end**: Layer range (use a single number to keep the fan on until the end of the print).
+    - **layer_start-layer_end**: Layer range (use a single number with `+` to keep the fan on from that layer onwards).
     <br>
     - **percentage**: Fan speed percentage (must be in 10% increments, *e.g.*, 10, 20, ..., 100).
     <br>
     **Example:**
     <br>
     ```
-    {"50-130": "10", "135-145": "20", "200": "10"}
+    {"50-130": "10", "135-145": "20", "200+": "10"}
     ```
   domain: automation
   input:
@@ -48,19 +48,19 @@ blueprint:
         **Format:**
         <br>
         ```
-        {"layer_start-layer_end": "percentage", ...}
+        {"layer_start-layer_end": "percentage", "layer_start+": "percentage", ...}
         ```
         <br>
-        - **layer_start-layer_end**: Layer range (use a single number to keep the fan on until the end of the print).
+        - **layer_start-layer_end**: Layer range (use a single number with `+` to keep the fan on from that layer onwards).
         <br>
         - **percentage**: Fan speed percentage (must be in 10% increments, e.g., 10, 20, ..., 100).
         <br>
         **Example:**
         <br>
         ```
-        {"50-130": "10", "135-145": "20", "200": "10"}
+        {"50-130": "10", "135-145": "20", "200+": "10"}
         ```
-      default: '{"50-130": "10", "135-145": "20", "200": "10"}'
+      default: '{"50-130": "10", "135-145": "20", "200+": "10"}'
       selector:
         text:
 trigger:
@@ -76,17 +76,26 @@ action:
       current_percentage: > 
         {% set ns = namespace(current_percentage=0) %}
         {% for layers_str, percentage in fan_settings_dict.items() %}
-          {% if '-' in layers_str %}
+          {% if layers_str.endswith('+') %}
+            {% set layer_start = layers_str[:-1] | int %}
+            {% if current_layer >= layer_start %}
+              {% set ns.current_percentage = percentage | int %}
+              {% break %}
+            {% endif %}
+          {% elif '-' in layers_str %}
             {% set layer_start, layer_end = layers_str.split('-', 1) %}
+            {% set layer_start = layer_start | int %}
+            {% set layer_end = layer_end | int %}
+            {% if current_layer >= layer_start and current_layer <= layer_end %}
+              {% set ns.current_percentage = percentage | int %}
+              {% break %}
+            {% endif %}
           {% else %}
-            {% set layer_start = layers_str %}
-            {% set layer_end = layers_str %}
-          {% endif %}
-          {% set layer_start = layer_start | int %}
-          {% set layer_end = layer_end | int %}
-          {% if current_layer >= layer_start and current_layer <= layer_end %}
-            {% set ns.current_percentage = percentage | int %}
-            {% break %}
+            {% set layer_start = layers_str | int %}
+            {% if current_layer == layer_start %}
+              {% set ns.current_percentage = percentage | int %}
+              {% break %}
+            {% endif %}
           {% endif %}
         {% endfor %}
         {{ (ns.current_percentage + 5) // 10 * 10 }}
