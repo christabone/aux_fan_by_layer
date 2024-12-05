@@ -1,20 +1,24 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    11Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+    Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
     Specify fan speed settings as a simplified JSON string.
 
     **Format:**
+    <br>
     ```
     {"layer_start-layer_end": "percentage", ...}
     ```
-    - **layer_start-layer_end**: Layer range (use a single number for a single layer).
-    - **percentage**: Fan speed percentage (must be in 10% increments, e.g., 10, 20, ..., 100).
-
+    <br>
+    - **layer_start-layer_end**: Layer range (use a single number to keep the fan on until the end of the print).
+    <br>
+    - **percentage**: Fan speed percentage (must be in 10% increments, *e.g.*, 10, 20, ..., 100).
+    <br>
     **Example:**
+    <br>
     ```
-    {"246-250": "10", "251-252": "20", "253": "10"}
+    {"50-130": "10", "135-145": "20", "200": "10"}
     ```
   domain: automation
   input:
@@ -40,20 +44,23 @@ blueprint:
       name: Fan Speed Settings
       description: >
         Specify fan speed settings as a simplified JSON string.
-
+        <br>
         **Format:**
+        <br>
         ```
         {"layer_start-layer_end": "percentage", ...}
         ```
-
-        - **layer_start-layer_end**: Layer range (use a single number for a single layer).
+        <br>
+        - **layer_start-layer_end**: Layer range (use a single number to keep the fan on until the end of the print).
+        <br>
         - **percentage**: Fan speed percentage (must be in 10% increments, e.g., 10, 20, ..., 100).
-
+        <br>
         **Example:**
+        <br>
         ```
-        {"246-250": "10", "251-252": "20", "253": "10"}
+        {"50-130": "10", "135-145": "20", "200": "10"}
         ```
-      default: '{"246-250": "10", "251-252": "20", "253": "10"}'
+      default: '{"50-130": "10", "135-145": "20", "200": "10"}'
       selector:
         text:
 trigger:

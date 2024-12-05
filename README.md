@@ -7,15 +7,13 @@ Overview
 --------
 
 -   **Adjust AUX fan speed** based on the current printing layer.
--   **Optimized commands** by checking current fan speed before sending new commands.
--   **Supports single layers and layer ranges** with specified percentages.
--   **Default fan percentage** when no specific setting applies.
+-   **Supports layer ranges** with specified percentages.
 -   **Easy to configure and customize** through Home Assistant's UI.
 
 Requirements
 ------------
 
--   **Home Assistant** with the Bambu Lab integration installed.
+-   **[Home Assistant](https://www.home-assistant.io/)** with the [Bambu Lab integration](https://github.com/greghesp/ha-bambulab) installed.
 -   A **Bambu Lab P1S/X1C 3D printer** connected to Home Assistant.
 -   Entities for:
     -   **Current Layer Sensor** (e.g., `sensor.p1s_current_layer`).
@@ -31,7 +29,7 @@ Installation
 
     Click the button below to import the Layer-Based AUX Fan Control blueprint:
 
-    ![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/christabone/aux_fan_by_layer/blob/main/aux_fan_by_layer.yaml)
+    [![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/christabone/aux_fan_by_layer/blob/main/aux_fan_by_layer.yaml)
 
 2.  **In Home Assistant:**
 
@@ -60,10 +58,12 @@ Configuration
         -   Select your printer's AUX fan speed sensor (e.g., `sensor.p1s_aux_fan_speed`).
     -   **Fan Speed Settings:**
         -   Input your fan speed settings using the specified format.
-        -   Example: `[50:190-210], [60:220-230], [150]`
-    -   **Default Fan Percentage:**
-        -   Set the default fan speed percentage (e.g., `70`).
-        -   This percentage is used when no specific setting applies.
+        -   **Example:**
+
+            `{"246-250": "10", "251-252": "20", "253": "10"}`
+
+        -   **Note:** Ensure that each layer range is a **unique key** to prevent conflicts.
+
 3.  **Save and Enable the Automation:**
 
     -   Click **"Save"** to create the automation.
@@ -74,126 +74,114 @@ Fan Speed Settings Format
 
 ### **Supported Formats**
 
--   **Single Layer without Percentage:**
+The `fan_speed_settings` input accepts a JSON string that maps **layer ranges** to **fan speed percentages**. This structure ensures unique layer range keys and avoids duplicate entries.
 
-    `[layer]`
+-   **Format:**
 
-    -   **Example:** `[150]`
-    -   **Behavior:**
-        -   Fan turns **ON** at the default percentage from layer 150 onwards.
-        -   Fan is **OFF** before layer 150.
--   **Layer Range without Percentage:**
+    `{"layer_start-layer_end": "percentage", ...}`
 
-    `[layer_start-layer_end]`
+    -   **layer_start-layer_end:** Layer range (use a single number to keep the fan on until the end of the print).
+    -   **percentage:** Fan speed percentage (must be in 10% increments, *e.g.*, 10, 20, ..., 100).
+-   **Example:**
 
-    -   **Example:** `[190-210]`
-    -   **Behavior:**
-        -   Fan runs at the default percentage between layers 190 and 210.
-        -   Fan is **OFF** outside this range.
--   **Single Layer with Percentage:**
+    `{"246-250": "10", "251-252": "20", "253": "10"}`
 
-    `[percentage:layer]`
+### **Layer Range Definitions**
 
-    -   **Example:** `[50:190]`
-    -   **Behavior:**
-        -   Fan runs at **50%** from layer 190 onwards.
-        -   Fan is **OFF** before layer 190.
--   **Layer Range with Percentage:**
+-   **Single Layer:**
 
-    `[percentage:layer_start-layer_end]`
+    -   **Format:** `"layer": "percentage"`
+    -   **Example:** `"253": "10"`
+    -   **Behavior:** Fan runs at `10%` from layer `253` onwards.
+-   **Layer Range:**
 
-    -   **Example:** `[50:190-210]`
-    -   **Behavior:**
-        -   Fan runs at **50%** between layers 190 and 210.
-        -   Fan is **OFF** outside this range.
-
-### **Combining Multiple Settings**
-
--   **Separate multiple settings with commas.**
-
-    -   **Example:** `[50:190-210], [60:220-230], [240]`
+    -   **Format:** `"layer_start-layer_end": "percentage"`
+    -   **Example:** `"246-250": "10"`
+    -   **Behavior:** Fan runs at `10%` between layers `246` and `250` inclusive.
 
 ### **Examples**
 
 -   **Example 1:**
 
-    `[50:190-210]`
+    `{"246-250": "10", "251-252": "20", "253": "10"}`
 
-    -   **Layers 1-189:** Fan is **OFF**.
-    -   **Layers 190-210:** Fan runs at **50%**.
-    -   **Layers 211 and above:** Fan is **OFF**.
+    -   **Layers 246-250:** Fan runs at `10%`.
+    -   **Layers 251-252:** Fan runs at `20%`.
+    -   **Layer 253:** Fan runs at `10%` onwards.
 -   **Example 2:**
 
-    `[45:80-120], [80:130-145], [60:150]`
+    `{"50-130": "10", "135-145": "20", "200": "10"}`
 
-    -   **Layers 1-79:** Fan is **OFF**.
-    -   **Layers 80-120:** Fan runs at **45%**.
-    -   **Layers 121-129:** Fan is **OFF**.
-    -   **Layers 130-145:** Fan runs at **80%**.
-    -   **Layers 146-149:** Fan is **OFF**.
-    -   **Layers 150 and above:** Fan runs at **60%**.
+    -   **Layers 50-130:** Fan runs at `10%`.
+    -   **Layers 135-145:** Fan runs at `20%`.
+    -   **Layer 200:** Fan runs at `10%` onwards.
 -   **Example 3:**
 
-    `[150]`
+    `{"150": "10"}`
 
-    -   **Layers 1-149:** Fan is **OFF**.
-    -   **Layers 150 and above:** Fan runs at the **default percentage** (e.g., 70%).
+    -   **Layers 150 and above:** Fan runs at `10%`.
+    -   **Layers below 150:** Fan is **OFF**.
 
-### **Default Fan Percentage**
+### **Important Notes:**
 
--   **Purpose:**
-    -   Specifies the fan speed percentage when **no percentage is provided** in a setting.
-    -   Used **only** when the current layer matches a setting without a specified percentage.
--   **Default Value:**
-    -   `70` (can be adjusted during configuration).
--   **Fan is OFF when the current layer does not match any settings.**
+-   **Unique Keys:** Ensure that each layer range is a unique key in the JSON to prevent overwriting settings.
+-   **10% Increments:** Percentages must be in 10% increments to comply with the AUX fan's operational requirements.
+-   **No Overlaps:** Avoid overlapping layer ranges to ensure predictable fan behavior.
 
 How It Works
 ------------
 
--   **Optimized Command Sending:**
+-   **Layer-Based Control:**
 
-    -   The automation checks the current fan speed before sending commands.
-    -   If the fan is already at the desired speed, no action is taken.
-    -   Reduces unnecessary commands and potential wear on the device.
+    -   The automation monitors the current layer of the print job via the `printer_layer_sensor`.
+    -   Based on the `fan_speed_settings`, it determines the appropriate fan speed percentage and sets the variable `current_percentage`.
+    -   If the current layer falls within a defined range, the fan speed is set accordingly.
+    -   Percentages are rounded to the nearest 10 to adhere to the fan's requirements.
 -   **Fan Control Logic:**
 
-    -   **When the desired fan speed differs from the current speed:**
-        -   If the desired speed is greater than `0`:
-            -   If the fan is off, it turns on the fan.
-            -   Sets the fan to the desired speed.
-        -   If the desired speed is `0`:
-            -   Turns off the fan if it's currently on.
+    -   **When `current_percentage > 0`:**
+        -   If the fan is **OFF**, it turns **ON**.
+        -   Sets the fan speed to `current_percentage`.
+    -   **When `current_percentage == 0`:**
+        -   If the fan is **ON**, it turns **OFF**.
+-   **Optimized Commands:**
+
+    -   The automation checks the current fan speed before sending commands.
+    -   Reduces unnecessary commands to the printer.
 
 Notes and Tips
 --------------
 
 -   **Input Validation:**
 
-    -   Ensure your fan speed settings are correctly formatted.
-    -   Incorrect formats may lead to unexpected behavior.
--   **Testing:**
-
-    -   Test the automation with different layer values to ensure it behaves as expected.
-    -   Use the **Template Editor** in Home Assistant for advanced testing of the parsing logic.
--   **Avoiding Unnecessary Commands:**
-
-    -   By checking the current fan speed, the automation minimizes unnecessary commands, which can help prevent communication overload with the printer.
+    -   Ensure your `fan_speed_settings` JSON is correctly formatted.
+    -   Use online JSON validators (e.g., [JSONLint](https://jsonlint.com/)) to verify your JSON structure before inputting it into Home Assistant.
 
 Troubleshooting
 ---------------
 
 -   **Fan Not Adjusting as Expected:**
 
-    -   Check that your `printer_layer_sensor` is reporting the correct layer.
-    -   Verify that your `printer_fan_control` entity is functioning and supports percentage control.
-    -   Ensure that the `printer_fan_speed_sensor` is correctly reporting the fan speed.
--   **Invalid Fan Speed Settings:**
+    -   **Check Sensor Entities:**
+        -   Verify that `printer_layer_sensor` correctly reports the current layer.
+        -   Ensure that `printer_fan_speed_sensor` accurately reflects the fan's current speed.
+    -   **Validate JSON Configuration:**
+        -   Use a JSON validator to ensure `fan_speed_settings` is correctly formatted.
+        -   Ensure there are no duplicate keys in the JSON.
+    -   **Check Automation Logs:**
+        -   Navigate to **Settings > System > Logs** in Home Assistant.
+        -   Look for any errors or debug messages related to the AUX Fan Control automation.
+-   **Fan Turns Off Unexpectedly:**
+    -   **Review Layer Ranges:**
+        -   Confirm that there are no overlapping or conflicting layer ranges.
 
-    -   Ensure all settings are enclosed in square brackets `[ ]`.
-    -   Separate brackets with commas `,`.
-    -   Use colons `:` to separate percentages from layers.
-    -   Use hyphens `-` to indicate layer ranges.
+-   **Automation Not Triggering:**
+
+    -   **Check Triggers:**
+        -   Ensure that the `printer_layer_sensor` is correctly set up and updates as the print progresses.
+        -   Verify that the automation is **enabled**.
+    -   **Entity Names:**
+        -   Confirm that the entity IDs in the blueprint inputs match the actual entities in your Home Assistant setup.
 
 Contribution
 ------------
