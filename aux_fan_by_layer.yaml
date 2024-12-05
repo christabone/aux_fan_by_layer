@@ -1,7 +1,7 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    123Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+    Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
     Specify fan speed settings as a simplified JSON string.
 
@@ -71,11 +71,10 @@ action:
       fan_settings_dict: "{{ fan_settings_str | from_json }}"
       current_percentage: >
         {% set current_percentage = 0 %}
-        {% set debug_info = '' %}
         {% for percentage, layers in fan_settings_dict.items() %}
           {% set percentage = percentage | int %}
           {% set layers_str = layers|string %}
-          {% set debug_info = debug_info + 'layers: ' + layers_str + '\n' %}
+          {{ 'layers: ' + layers_str + '\n' }} {# Print layers #}
           {% if '-' in layers_str %}
             {% set layer_start, layer_end = layers_str.split('-', 1) %}
           {% else %}
@@ -84,13 +83,13 @@ action:
           {% endif %}
           {% set layer_start = layer_start | int %}
           {% set layer_end = layer_end | int %}
-          {% set debug_info = debug_info + 'Evaluating: percentage=' + percentage|string + ', layers=' + layers_str + ', layer_start=' + layer_start|string + ', layer_end=' + layer_end|string + ', current_layer=' + current_layer|string + '\n' %}
+          {{ 'Evaluating: percentage=' + percentage|string + ', layers=' + layers_str + ', layer_start=' + layer_start|string + ', layer_end=' + layer_end|string + ', current_layer=' + current_layer|string + '\n' }} {# Print evaluation details #}
           {% if current_layer >= layer_start and current_layer <= layer_end %}
             {% set current_percentage = percentage %}
-            {% set debug_info = debug_info + 'Match found: current_percentage=' + current_percentage|string + '\n' %}
+            {{ 'Match found: current_percentage=' + current_percentage|string + '\n' }} {# Print match found #}
             {% break %}
           {% else %}
-            {% set debug_info = debug_info + 'No match\n' %}
+            {{ 'No match\n' }} {# Print no match #}
           {% endif %}
         {% endfor %}
         {{ current_percentage }}
