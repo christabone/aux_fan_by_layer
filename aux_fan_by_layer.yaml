@@ -69,32 +69,32 @@ blueprint:
         fan_speed_sensor: !input printer_fan_speed_sensor
         current_fan_speed: "{{ states(fan_speed_sensor) | int(0) }}"
         fan_settings_dict: "{{ fan_settings_str | from_json }}"
-    - variables: |
-        {% set ns = namespace(current_percentage=0, debug_info='') %}
-        {% for percentage, layers in fan_settings_dict.items() %}
-          {% set percentage = percentage | int %}
-          {% set layers_str = layers|string %}
-          {% set ns.debug_info = ns.debug_info + 'layers: ' + layers_str + '\n' %}
-          {% if '-' in layers_str %}
-            {% set layer_start, layer_end = layers_str.split('-', 1) %}
-          {% else %}
-            {% set layer_start = layers_str %}
-            {% set layer_end = layers_str %}
-          {% endif %}
-          {% set layer_start = layer_start | int %}
-          {% set layer_end = layer_end | int %}
-          {% set ns.debug_info = ns.debug_info + 'Evaluating: percentage=' + percentage|string + ', layers=' + layers_str + ', layer_start=' + layer_start|string + ', layer_end=' + layer_end|string + ', current_layer=' + current_layer|string + '\n' %}
-          {% if current_layer >= layer_start and current_layer <= layer_end %}
-            {% set ns.current_percentage = percentage %}
-            {% set ns.debug_info = ns.debug_info + 'Match found: current_percentage=' + ns.current_percentage|string + '\n' %}
-            {% break %}
-          {% else %}
-            {% set ns.debug_info = ns.debug_info + 'No match\n' %}
-          {% endif %}
-        {% endfor %}
-        current_percentage: "{{ ns.current_percentage }}"
-        debug_info: "{{ ns.debug_info }}"
-    - service: system_log.write
+        current_percentage: > 
+          {% set ns = namespace(current_percentage=0, debug_info='') %}
+          {% for percentage, layers in fan_settings_dict.items() %}
+            {% set percentage = percentage | int %}
+            {% set layers_str = layers|string %}
+            {% set ns.debug_info = ns.debug_info + 'layers: ' + layers_str + '\n' %}
+            {% if '-' in layers_str %}
+              {% set layer_start, layer_end = layers_str.split('-', 1) %}
+            {% else %}
+              {% set layer_start = layers_str %}
+              {% set layer_end = layers_str %}
+            {% endif %}
+            {% set layer_start = layer_start | int %}
+            {% set layer_end = layer_end | int %}
+            {% set ns.debug_info = ns.debug_info + 'Evaluating: percentage=' + percentage|string + ', layers=' + layers_str + ', layer_start=' + layer_start|string + ', layer_end=' + layer_end|string + ', current_layer=' + current_layer|string + '\n' %}
+            {% if current_layer >= layer_start and current_layer <= layer_end %}
+              {% set ns.current_percentage = percentage %}
+              {% set ns.debug_info = ns.debug_info + 'Match found: current_percentage=' + ns.current_percentage|string + '\n' %}
+              {% break %}
+            {% else %}
+              {% set ns.debug_info = ns.debug_info + 'No match\n' %}
+            {% endif %}
+          {% endfor %}
+          current_percentage: "{{ ns.current_percentage }}"
+          debug_info: "{{ ns.debug_info }}"
+    - service: system_log.write 
       data:
         level: info
         message: >
