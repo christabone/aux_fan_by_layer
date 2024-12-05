@@ -75,6 +75,7 @@ action:
         {% for percentage, layers in fan_settings_dict.items() %}
           {% set percentage = percentage | int %}
           {% set layers_str = layers|string %}
+          {% set debug_info = debug_info + 'layers: ' + layers_str + '\n' %}
           {% if '-' in layers_str %}
             {% set layer_start, layer_end = layers_str.split('-', 1) %}
           {% else %}
