@@ -92,8 +92,6 @@ action:
             {% set ns.debug_info = ns.debug_info + 'No match\n' %}
           {% endif %}
         {% endfor %}
-        current_percentage: "{{ ns.current_percentage }}"
-        debug_info: "{{ ns.debug_info }}"
   - service: system_log.write
     data:
       level: info
