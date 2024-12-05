@@ -1,43 +1,40 @@
 blueprint:
-  name: Layer-Based AUX Fan Control with Stage Monitoring
+  name: Layer-Based AUX Fan Control
   description: >
-    22Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer and printer stage.
+    55Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
-    - **Layer-Based Control:** Adjust fan speed according to the current layer using a JSON configuration.
-    - **Stage-Based Control:** Automatically turn off the AUX fan when the printer switches to "idle".
+    Specify fan speed settings as a simplified JSON string.
 
-    **Fan Speed Settings Format:**
+    Format:
     ```
     {"percentage": "layer_start-layer_end", ...}
     ```
-    - **percentage**: Fan speed percentage (e.g., 10, 20, ..., 100).
+
+    - **percentage**: Fan speed percentage.
     - **layer_start-layer_end**: Layer range (use a single number for a single layer).
 
-    **Example:**
+    For example:
     ```
-    {"10": "1095-1100", "20": "1101-1200"}
+    {"50": "110-150", "60": "220-230", "70": "240"}
     ```
 
   domain: automation
   input:
     printer_layer_sensor:
       name: Printer Current Layer Sensor Entity
-      description: >
-        Sensor entity that provides the current layer of the print job.
+      description: Sensor entity that provides the current layer of the print job.
       selector:
         entity:
           domain: sensor
     printer_fan_control:
       name: Printer AUX Fan Control Entity
-      description: >
-        Fan entity to control the printer's AUX fan power and speed.
+      description: Fan entity to control the printer's AUX fan power and speed.
       selector:
         entity:
           domain: fan
     printer_fan_speed_sensor:
       name: Printer AUX Fan Speed Sensor Entity
-      description: >
-        Sensor entity that provides the current AUX fan speed.
+      description: Sensor entity that provides the current AUX fan speed.
       selector:
         entity:
           domain: sensor
@@ -46,35 +43,25 @@ blueprint:
       description: >
         Specify fan speed settings as a simplified JSON string.
 
-        **Format:**
+        Format:
         ```
         {"percentage": "layer_start-layer_end", ...}
         ```
 
-        - **percentage**: Fan speed percentage (must be in 10% increments, e.g., 10, 20, ..., 100).
+        - **percentage**: Fan speed percentage.
         - **layer_start-layer_end**: Layer range (use a single number for a single layer).
 
-        **Example:**
+        For example:
         ```
-        {"10": "1095-1100", "20": "1101-1200"}
+        {"50": "110-150", "60": "220-230", "70": "240"}
         ```
 
-      default: '{"10": "1095-1100", "20": "1101-1200"}'
+      default: '{"50": "190-210"}'
       selector:
         text:
-    printer_stage_sensor:
-      name: Printer Current Stage Sensor Entity
-      description: >
-        Sensor entity that indicates the current stage of the printer (e.g., "printing", "idle").
-      selector:
-        entity:
-          domain: sensor
 trigger:
   - platform: state
     entity_id: !input printer_layer_sensor
-  - platform: state
-    entity_id: !input printer_stage_sensor
-    to: "idle"
 action:
   - variables:
       current_layer: "{{ states(trigger.entity_id) | int(0) }}"
@@ -82,30 +69,26 @@ action:
       fan_speed_sensor: !input printer_fan_speed_sensor
       current_fan_speed: "{{ states(fan_speed_sensor) | int(0) }}"
       fan_settings_dict: "{{ fan_settings_str | from_json }}"
-      current_stage: "{{ states(input.printer_stage_sensor) | default('unknown') }}"
       current_percentage: > 
-        {% if trigger.entity_id == input.printer_stage_sensor and current_stage == "idle" %}
-          0
-        {% else %}
-          {% set ns = namespace(current_percentage=0) %}
-          {% for percentage, layers in fan_settings_dict.items() %}
-            {% set percentage = percentage | int %}
-            {% set layers_str = layers|string %}
-            {% if '-' in layers_str %}
-              {% set layer_start, layer_end = layers_str.split('-', 1) %}
-            {% else %}
-              {% set layer_start = layers_str %}
-              {% set layer_end = layers_str %}
-            {% endif %}
-            {% set layer_start = layer_start | int %}
-            {% set layer_end = layer_end | int %}
-            {% if current_layer >= layer_start and current_layer <= layer_end %}
-              {% set ns.current_percentage = percentage %}
-              {% break %}
-            {% endif %}
-          {% endfor %}
-          {{ (ns.current_percentage + 5) // 10 * 10 }}
-        {% endif %}
+        {% set ns = namespace(current_percentage=0) %}
+        {% for percentage, layers in fan_settings_dict.items() %}
+          {% set percentage = percentage | int %}
+          {% set layers_str = layers|string %}
+          {% if '-' in layers_str %}
+            {% set layer_start, layer_end = layers_str.split('-', 1) %}
+          {% else %}
+            {% set layer_start = layers_str %}
+            {% set layer_end = layers_str %}
+          {% endif %}
+          {% set layer_start = layer_start | int %}
+          {% set layer_end = layer_end | int %}
+          {% if current_layer >= layer_start and current_layer <= layer_end %}
+            {% set ns.current_percentage = percentage %}
+            {% break %}
+          {% else %}
+          {% endif %} 
+        {% endfor %}
+        {{ ns.current_percentage }}
   - service: system_log.write
     data:
       level: info
@@ -114,7 +97,7 @@ action:
         current_layer: {{ current_layer }},
         current_percentage: {{ current_percentage }},
         current_fan_speed: {{ current_fan_speed }},
-        fan_settings_dict: {{ fan_settings_dict }}
+        fan_settings_dict: {{ fan_settings_dict }},
   - service: system_log.write
     data:
       level: info
