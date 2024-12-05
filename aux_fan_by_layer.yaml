@@ -82,7 +82,7 @@ action:
       fan_speed_sensor: !input printer_fan_speed_sensor
       current_fan_speed: "{{ states(fan_speed_sensor) | int(0) }}"
       fan_settings_dict: "{{ fan_settings_str | from_json }}"
-      current_stage: "{{ states(input.printer_stage_sensor).state | default('unknown') }}"
+      current_stage: "{{ states(input.printer_stage_sensor) | default('unknown') }}"
       current_percentage: > 
         {% if trigger.entity_id == input.printer_stage_sensor and current_stage == "idle" %}
           0
