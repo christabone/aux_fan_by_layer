@@ -48,6 +48,7 @@ Configuration
     -   Click **"Create Automation"**.
     -   Select **"Start with a Blueprint"**.
     -   Choose **"Layer-Based AUX Fan Control"** from the list.
+
 2.  **Fill in the Inputs:**
 
     -   **Printer Current Layer Sensor Entity:**
@@ -60,9 +61,9 @@ Configuration
         -   Input your fan speed settings using the specified format.
         -   **Example:**
 
-            `{"246-250": "10", "251-252": "20", "253": "10"}`
+            `{"100-250": "10", "251-270": "20"}`
 
-        -   **Note:** Ensure that each layer range is a **unique key** to prevent conflicts.
+        -   **Note:** Ensure that each layer range is a **unique key** to prevent conflicts. In other words, don't overlap layer ranges.
 
 3.  **Save and Enable the Automation:**
 
@@ -74,57 +75,41 @@ Fan Speed Settings Format
 
 ### **Supported Formats**
 
-The `fan_speed_settings` input accepts a JSON string that maps **layer ranges** to **fan speed percentages**. This structure ensures unique layer range keys and avoids duplicate entries.
+The `fan_speed_settings` input accepts a JSON string that maps **layer ranges** to **fan speed percentages**.
 
 -   **Format:**
 
     `{"layer_start-layer_end": "percentage", ...}`
 
-    -   **layer_start-layer_end:** Layer range (use a single number to keep the fan on until the end of the print).
+    -   **layer_start-layer_end:** Layer range.
     -   **percentage:** Fan speed percentage (must be in 10% increments, *e.g.*, 10, 20, ..., 100).
--   **Example:**
-
-    `{"246-250": "10", "251-252": "20", "253": "10"}`
-
-### **Layer Range Definitions**
-
--   **Single Layer:**
-
-    -   **Format:** `"layer": "percentage"`
-    -   **Example:** `"253": "10"`
-    -   **Behavior:** Fan runs at `10%` from layer `253` onwards.
--   **Layer Range:**
-
-    -   **Format:** `"layer_start-layer_end": "percentage"`
-    -   **Example:** `"246-250": "10"`
-    -   **Behavior:** Fan runs at `10%` between layers `246` and `250` inclusive.
 
 ### **Examples**
 
 -   **Example 1:**
+    
+    `{"60-130": "50"}`
 
-    `{"246-250": "10", "251-252": "20", "253": "10"}`
+    -   **Layers 60-130:** Fan runs at `50%`.
 
-    -   **Layers 246-250:** Fan runs at `10%`.
-    -   **Layers 251-252:** Fan runs at `20%`.
-    -   **Layer 253:** Fan runs at `10%` onwards.
 -   **Example 2:**
 
-    `{"50-130": "10", "135-145": "20", "200": "10"}`
+    `{"246-250": "30", "251-252": "20"}`
 
-    -   **Layers 50-130:** Fan runs at `10%`.
-    -   **Layers 135-145:** Fan runs at `20%`.
-    -   **Layer 200:** Fan runs at `10%` onwards.
+    -   **Layers 246-250:** Fan runs at `30%`.
+    -   **Layers 251-252:** Fan runs at `20%`.
+
 -   **Example 3:**
 
-    `{"150": "10"}`
+    `{"50-130": "10", "135-145": "20", "146-200": "50"}`
 
-    -   **Layers 150 and above:** Fan runs at `10%`.
-    -   **Layers below 150:** Fan is **OFF**.
+    -   **Layers 50-130:** Fan runs at `10%`.
+    -   **Layers 131-134:** Fan turns off.
+    -   **Layers 135-145:** Fan runs at `20%`.
+    -   **Layers 146-200:** FAn runs at `50%`.
 
 ### **Important Notes:**
 
--   **Unique Keys:** Ensure that each layer range is a unique key in the JSON to prevent overwriting settings.
 -   **10% Increments:** Percentages must be in 10% increments to comply with the AUX fan's operational requirements.
 -   **No Overlaps:** Avoid overlapping layer ranges to ensure predictable fan behavior.
 
@@ -133,21 +118,10 @@ How It Works
 
 -   **Layer-Based Control:**
 
-    -   The automation monitors the current layer of the print job via the `printer_layer_sensor`.
-    -   Based on the `fan_speed_settings`, it determines the appropriate fan speed percentage and sets the variable `current_percentage`.
-    -   If the current layer falls within a defined range, the fan speed is set accordingly.
+    -   The automation monitors the current layer of the print job via the `current_layer` sensor.
+    -   If the current layer falls within a defined range from the user's JSON input, the automation checks the current fan speed via the `aux_fan_speed` sensor.
+    -   If the current fan speed needs to be updated to the speed from the user's JSON, the script sends the command to the printer. Otherwise, if the speed is already set, the script waits for the next `current_layer`.
     -   Percentages are rounded to the nearest 10 to adhere to the fan's requirements.
--   **Fan Control Logic:**
-
-    -   **When `current_percentage > 0`:**
-        -   If the fan is **OFF**, it turns **ON**.
-        -   Sets the fan speed to `current_percentage`.
-    -   **When `current_percentage == 0`:**
-        -   If the fan is **ON**, it turns **OFF**.
--   **Optimized Commands:**
-
-    -   The automation checks the current fan speed before sending commands.
-    -   Reduces unnecessary commands to the printer.
 
 Notes and Tips
 --------------
