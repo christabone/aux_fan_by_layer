@@ -1,7 +1,7 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    12Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+    11Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
     Specify fan speed settings as a simplified JSON string.
 
