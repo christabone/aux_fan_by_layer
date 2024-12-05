@@ -93,6 +93,7 @@ The `fan_speed_settings` input accepts a JSON string that maps **layer ranges** 
     `{"60-130": "50"}`
 
     -   **Layers 60-130:** Fan runs at `50%`.
+    -   Off at all others layers.
 
 -   **Example 2:**
 
@@ -100,6 +101,7 @@ The `fan_speed_settings` input accepts a JSON string that maps **layer ranges** 
 
     -   **Layers 246-250:** Fan runs at `30%`.
     -   **Layers 251-252:** Fan runs at `20%`.
+    -   Off at all other layers.
 
 -   **Example 3:**
 
@@ -109,6 +111,7 @@ The `fan_speed_settings` input accepts a JSON string that maps **layer ranges** 
     -   **Layers 131-134:** Fan turns off.
     -   **Layers 135-145:** Fan runs at `20%`.
     -   **Layers 146-200:** FAn runs at `50%`.
+    -   Off at all other layers.
 
 ### **Important Notes:**
 
