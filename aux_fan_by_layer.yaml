@@ -89,7 +89,7 @@ action:
             {% break %}
           {% endif %}
         {% endfor %}
-        current_percentage: "{{ ns.current_percentage }}"
+        current_percentage: {{ ns.current_percentage }}
   - service: system_log.write
     data:
       level: info
