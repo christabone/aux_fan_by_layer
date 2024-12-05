@@ -1,7 +1,7 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    111Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+    222Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
     Specify fan speed settings as a simplified JSON string.
 
@@ -28,7 +28,7 @@ blueprint:
           domain: sensor
     printer_fan_control:
       name: Printer AUX Fan Control Entity
-      description: Fan entity to control the printer's aux fan power and speed.
+      description: Fan entity to control the printer's AUX fan power and speed.
       selector:
         entity:
           domain: fan
@@ -59,17 +59,6 @@ blueprint:
       default: '{"50": "190-210"}'
       selector:
         text:
-    default_fan_percentage:
-      name: Default Fan Percentage
-      description: >
-        The default fan speed percentage to use when no percentage is specified in a setting.
-      default: 70
-      selector:
-        number:
-          min: 0
-          max: 100
-          unit_of_measurement: "%"
-          mode: slider
 trigger:
   - platform: state
     entity_id: !input printer_layer_sensor
@@ -77,7 +66,6 @@ action:
   - variables:
       current_layer: "{{ states(trigger.entity_id) | int(0) }}"
       fan_settings_str: !input fan_speed_settings
-      default_fan_percentage: !input default_fan_percentage
       fan_speed_sensor: !input printer_fan_speed_sensor
       current_fan_speed: "{{ states(fan_speed_sensor) | int(0) }}"
       fan_settings_dict: "{{ fan_settings_str | from_json }}"
