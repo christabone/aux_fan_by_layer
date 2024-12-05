@@ -52,18 +52,18 @@ Configuration
 2.  **Fill in the Inputs:**
 
     -   **Printer Current Layer Sensor Entity:**
-        -   Select your printer's current layer sensor (e.g., `sensor.p1s_current_layer`).
+        -   Select your printer's current layer sensor (*e.g.*, `sensor.p1s_current_layer`).
     -   **Printer AUX Fan Control Entity:**
-        -   Select your printer's AUX fan control entity (e.g., `fan.p1s_aux_fan`).
+        -   Select your printer's AUX fan control entity (*e.g.*, `fan.p1s_aux_fan`).
     -   **Printer AUX Fan Speed Sensor Entity:**
-        -   Select your printer's AUX fan speed sensor (e.g., `sensor.p1s_aux_fan_speed`).
+        -   Select your printer's AUX fan speed sensor (*e.g.*, `sensor.p1s_aux_fan_speed`).
     -   **Fan Speed Settings:**
         -   Input your fan speed settings using the specified format.
         -   **Example:**
 
             `{"100-250": "10", "251-270": "20"}`
 
-        -   **Note:** Ensure that each layer range is a **unique key** to prevent conflicts. In other words, don't overlap layer ranges.
+        -   **Note:** Ensure that each layer range is a **unique key** to prevent conflicts (don't overlap layer ranges).
 
 3.  **Save and Enable the Automation:**
 
