@@ -123,7 +123,6 @@ How It Works
     -   The automation monitors the current layer of the print job via the `current_layer` sensor.
     -   If the current layer falls within a defined range from the user's JSON input, the automation checks the current fan speed via the `aux_fan_speed` sensor.
     -   If the current fan speed needs to be updated to the speed from the user's JSON, the script sends the command to the printer. Otherwise, if the speed is already set, the script waits for the next `current_layer`.
-    -   Percentages are rounded to the nearest 10 to adhere to the fan's requirements.
 
 Notes and Tips
 --------------

@@ -84,7 +84,7 @@ action:
             {% break %}
           {% endif %}
         {% endfor %}
-        {{ (ns.current_percentage + 5) // 10 * 10 }}
+        {{ ns.current_percentage }}
   - service: system_log.write
     data:
       level: info
