@@ -138,6 +138,8 @@ Troubleshooting
 
 -   **Fan Not Adjusting as Expected:**
 
+    -   **Wait for layer change on updating values**
+        -  The automation only triggers on layer changes. If you've updated the JSON values mid-print, please wait for a layer change before the fan will update.
     -   **Check Sensor Entities:**
         -   Verify that `printer_layer_sensor` correctly reports the current layer.
         -   Ensure that `printer_fan_speed_sensor` accurately reflects the fan's current speed.
