@@ -59,11 +59,13 @@ Configuration
         -   Select your printer's AUX fan speed sensor (*e.g.*, `sensor.p1s_aux_fan_speed`).
     -   **Fan Speed Settings:**
         -   Input your fan speed settings using the specified format.
+        -  `{"layer_start-layer_end": "percentage", ...}`
+
         -   **Example:**
 
             `{"100-250": "10", "251-270": "20"}`
 
-        -   **Note:** Ensure that each layer range is a **unique key** to prevent conflicts (don't overlap layer ranges).
+        -   **Note:** Please see formatting instructions and additional examples below.
 
 3.  **Save and Enable the Automation:**
 
