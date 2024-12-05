@@ -1,13 +1,22 @@
 blueprint:
   name: Layer-Based AUX Fan Control
   description: >
-    777Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
+    111Control the AUX fan speed of a Bambu Lab P1S/X1C 3D printer based on the current layer.
 
-    Specify fan speed settings in the format `[percentage:layer]`, `[percentage:layer_start-layer_end]`, `[layer]`, or `[layer_start-layer_end]`.
+    Specify fan speed settings as a simplified JSON string.
 
-    Multiple settings can be combined by separating them with commas.
+    Format:
+    ```
+    {"percentage": "layer_start-layer_end", ...}
+    ```
 
-    For example: `[50:195-210]`, `[60:220-230]`, `[70:250]`.
+    - **percentage**: Fan speed percentage.
+    - **layer_start-layer_end**: Layer range (use a single number for a single layer).
+
+    For example:
+    ```
+    {"50": "110-150", "60": "220-230", "70": "240"}
+    ```
 
   domain: automation
   input:
@@ -19,7 +28,7 @@ blueprint:
           domain: sensor
     printer_fan_control:
       name: Printer AUX Fan Control Entity
-      description: Fan entity to control the printer's AUX fan power and speed.
+      description: Fan entity to control the printer's aux fan power and speed.
       selector:
         entity:
           domain: fan
@@ -32,13 +41,22 @@ blueprint:
     fan_speed_settings:
       name: Fan Speed Settings
       description: >
-        Specify fan speed settings in the format `[layer_start]`, `[percentage:layer_start]`, `[layer_start-layer_end]`, or `[percentage:layer_start-layer_end]`.
+        Specify fan speed settings as a simplified JSON string.
 
-        Multiple settings can be combined by separating them with commas.
+        Format:
+        ```
+        {"percentage": "layer_start-layer_end", ...}
+        ```
 
-        For example: `[50:195-210]`, `[60:220-230]`, `[70:250]`.
+        - **percentage**: Fan speed percentage.
+        - **layer_start-layer_end**: Layer range (use a single number for a single layer).
 
-      default: "[50:190-210]"
+        For example:
+        ```
+        {"50": "110-150", "60": "220-230", "70": "240"}
+        ```
+
+      default: '{"50": "190-210"}'
       selector:
         text:
     default_fan_percentage:
@@ -62,41 +80,21 @@ action:
       default_fan_percentage: !input default_fan_percentage
       fan_speed_sensor: !input printer_fan_speed_sensor
       current_fan_speed: "{{ states(fan_speed_sensor) | int(0) }}"
-      fan_settings_list: >
-        {% set fan_settings = [] %}
-        {% for setting in fan_settings_str.split(',') %}
-          {% set setting = setting.strip() %}
-          {% if setting.startswith('[') and setting.endswith(']') %}
-            {% set content = setting[1:-1] %}
-            {% if ':' in content %}
-              {% set parts = content.split(':') %}
-              {% set percentage = parts[0] | int %}
-              {% set layers_part = parts[1] %}
-            {% else %}
-              {% set percentage = None %}
-              {% set layers_part = content %}
-            {% endif %}
-            {% if '-' in layers_part %}
-              {% set layer_parts = layers_part.split('-') %}
-              {% set layer_start = layer_parts[0] | int %}
-              {% set layer_end = layer_parts[1] | int %}
-            {% else %}
-              {% set layer_start = layers_part | int %}
-              {% set layer_end = layer_start %}
-            {% endif %}
-            {% set fan_settings = fan_settings + [ {'percentage': percentage, 'layer_start': layer_start, 'layer_end': layer_end} ] %}
-          {% endif %}
-        {% endfor %}
-        {{ fan_settings }}
+      fan_settings_dict: "{{ fan_settings_str | from_json }}"
       current_percentage: >
         {% set current_percentage = 0 %}
-        {% for setting in fan_settings_list %}
-          {% if current_layer >= setting.layer_start and current_layer <= setting.layer_end %}
-            {% if setting.percentage is not none %}
-              {% set current_percentage = setting.percentage %}
-            {% else %}
-              {% set current_percentage = default_fan_percentage | int %}
-            {% endif %}
+        {% for percentage, layers in fan_settings_dict.items() %}
+          {% set percentage = percentage | int %}
+          {% if '-' in layers %}
+            {% set layer_start, layer_end = layers.split('-', 1) %}
+          {% else %}
+            {% set layer_start = layers %}
+            {% set layer_end = layers %}
+          {% endif %}
+          {% set layer_start = layer_start | int %}
+          {% set layer_end = layer_end | int %}
+          {% if current_layer >= layer_start and current_layer <= layer_end %}
+            {% set current_percentage = percentage %}
             {% break %}
           {% endif %}
         {% endfor %}
@@ -109,7 +107,7 @@ action:
         current_layer: {{ current_layer }},
         current_percentage: {{ current_percentage }},
         current_fan_speed: {{ current_fan_speed }},
-        fan_settings_list: {{ fan_settings_list }}
+        fan_settings_dict: {{ fan_settings_dict }}
   - choose:
       - conditions:
           - "{{ current_percentage | int > 0 }}"
