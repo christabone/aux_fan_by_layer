@@ -31,7 +31,7 @@ Installation
 
     Click the button below to import the Layer-Based AUX Fan Control blueprint:
 
-    ![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/badges/blueprint_import.svg)
+    ![Open your Home Assistant instance and show the blueprint import dialog with a specific blueprint pre-filled.](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://github.com/christabone/aux_fan_by_layer/blob/main/aux_fan_by_layer.yaml)
 
 2.  **In Home Assistant:**
 
